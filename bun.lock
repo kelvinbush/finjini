@@ -27,7 +27,7 @@
         "@types/node": "^24.7.0",
         "drizzle-kit": "^0.31.5",
         "prettier": "^3.6.2",
-        "tsx": "^4.19.2",
+        "tsx": "^4.20.6",
       },
       "peerDependencies": {
         "typescript": "^5.9.3",
