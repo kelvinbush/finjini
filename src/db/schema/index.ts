@@ -1,3 +1,3 @@
 // Export all schemas and types
-export * from './users.js';
-export * from './transactions.js';
+export * from './users';
+export * from './transactions';
