@@ -1,0 +1,3 @@
+# Fastify Plugins
+# Place your custom Fastify plugins here
+# Example: corsPlugin.ts, rateLimitPlugin.ts, swaggerPlugin.ts
