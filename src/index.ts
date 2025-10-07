@@ -12,6 +12,7 @@ import { rawBodyPlugin } from "./plugins/raw-body";
 import { requestLoggerPlugin } from "./plugins/request-logger";
 import { swaggerPlugin } from "./plugins/swagger";
 import { sql } from "drizzle-orm";
+import { registerParserRoutes } from "./routes/parser.routes";
 
 const PORT = Number(process.env.PORT) || 8080;
 const HOST = process.env.HOST || "0.0.0.0";
@@ -40,9 +41,8 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
     // Infrastructure
     await fastify.register(databasePlugin);
     await fastify.register(requestLoggerPlugin);
-    await fastify.register(swaggerPlugin);
 
-    logger.info("All plugins registered successfully");
+    logger.info("Core plugins registered successfully");
   } catch (error) {
     logger.error("Failed to register plugins:", error);
     throw error;
@@ -53,6 +53,8 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
  * Register application routes
  */
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
+  // Register parser routes
+  await registerParserRoutes(fastify);
   // Root endpoint
   fastify.get("/", {
     schema: {
@@ -62,9 +64,9 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
         200: {
           type: "object",
           properties: {
-            message: { type: "string", example: "Hello from Fastify!" },
+            message: { type: "string" },
             timestamp: { type: "string", format: "date-time" },
-            version: { type: "string", example: "1.0.0" },
+            version: { type: "string" },
           },
         },
       },
@@ -86,7 +88,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
         200: {
           type: "object",
           properties: {
-            status: { type: "string", example: "healthy" },
+            status: { type: "string" },
             timestamp: { type: "string", format: "date-time" },
             uptime: { type: "number", description: "Server uptime in seconds" },
             database: {
@@ -100,7 +102,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
         503: {
           type: "object",
           properties: {
-            status: { type: "string", example: "unhealthy" },
+            status: { type: "string" },
             timestamp: { type: "string", format: "date-time" },
             database: {
               type: "object",
@@ -108,7 +110,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
                 connected: { type: "boolean" },
               },
             },
-            error: { type: "string", example: "Database connection failed" },
+            error: { type: "string" },
           },
         },
       },
@@ -159,8 +161,13 @@ function setupGracefulShutdown(fastify: FastifyInstance): void {
  */
 export async function startServer(): Promise<FastifyInstance> {
   try {
-    // Register plugins and routes
+    // Register core plugins
     await registerPlugins(app);
+    
+    // Register Swagger plugin BEFORE routes (so it can detect route schemas)
+    await app.register(swaggerPlugin);
+    
+    // Register routes
     await registerRoutes(app);
 
     // Start listening
