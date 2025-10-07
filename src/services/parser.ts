@@ -23,8 +23,6 @@ export interface ParsedTransaction {
   mistralResponse?: any; // Raw response from Mistral AI
 }
 
-// Type for OpenAI response (can be single object or array)
-type OpenAIParseResponse = ParsedTransaction | ParsedTransaction[];
 
 /**
  * Extract financial details from text/SMS using OpenAI
@@ -47,8 +45,12 @@ Rules:
 2. If you're not sure about a value, use null
 3. For dates, use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) if possible, or null if unclear
 4. For amounts, extract only the numeric value (no currency symbols)
-5. For type, determine if this is an 'income' or 'expense' based on context
-6. For name, extract the merchant, service, or transaction description
+5. For type, analyze the transaction flow:
+   - EXPENSE: Money leaving your account (purchases, payments, transfers out, withdrawals, bills, fees)
+   - INCOME: Money entering your account (deposits, salary, refunds, payments received, cashback)
+   - Look for keywords: "sent to", "paid to", "transferred to" = EXPENSE
+   - Look for keywords: "received from", "deposited", "credited" = INCOME
+6. For name, extract the recipient, merchant, service, or transaction description
 7. Each transaction should have its own rawText extracted from the original message
 
 Text to parse: "${text}"
