@@ -54,12 +54,66 @@ export async function registerPlugins(fastify: FastifyInstance): Promise<void> {
  */
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // Root endpoint
-  fastify.get("/", async () => {
-    return { message: "Hello from Fastify!" };
+  fastify.get("/", {
+    schema: {
+      description: "Welcome endpoint",
+      tags: ["General"],
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            message: { type: "string", example: "Hello from Fastify!" },
+            timestamp: { type: "string", format: "date-time" },
+            version: { type: "string", example: "1.0.0" },
+          },
+        },
+      },
+    },
+  }, async () => {
+    return {
+      message: "Hello from Finjini API!",
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+    };
   });
 
   // Health check endpoint with database validation
-  fastify.get("/health", async (request, reply) => {
+  fastify.get("/health", {
+    schema: {
+      description: "Health check endpoint with database validation",
+      tags: ["Health"],
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            status: { type: "string", example: "healthy" },
+            timestamp: { type: "string", format: "date-time" },
+            uptime: { type: "number", description: "Server uptime in seconds" },
+            database: {
+              type: "object",
+              properties: {
+                connected: { type: "boolean" },
+              },
+            },
+          },
+        },
+        503: {
+          type: "object",
+          properties: {
+            status: { type: "string", example: "unhealthy" },
+            timestamp: { type: "string", format: "date-time" },
+            database: {
+              type: "object",
+              properties: {
+                connected: { type: "boolean" },
+              },
+            },
+            error: { type: "string", example: "Database connection failed" },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
     try {
       await fastify.db.execute(sql`SELECT 1 AS ok`);
       return {
